@@ -1,62 +1,40 @@
 package com.gildedrose;
 
+import java.util.HashMap;
+import java.util.Map;
+
 class GildedRose {
     Item[] items;
 
+    Map<String, UpdateQualityRule> rules;
+
     public GildedRose(Item[] items) {
         this.items = items;
+        rules = new HashMap<>();
+        additionalRules();
     }
 
     public void updateQuality() {
         for (int i = 0; i < items.length; i++) {
-            ItemWrapper item = new ItemWrapper(items[i]);           
-            updateQuality(item);
-            updateSellIn(item);
-            handlePastSellIn(item);            
-        }
+            ItemWrapper item = new ItemWrapper(items[i]);
+            UpdateQualityRule rule = createRule(item);
+            rule.updateQuality(item);
+            rule.updateSellIn(item);
+            rule.handlePastSellIn(item);
+         }
     }
 
-    public void updateSellIn(ItemWrapper item){
-        if (!item.hasName("Sulfuras, Hand of Ragnaros")) {
-            item.decreaseSellIn();
-        }
+    public UpdateQualityRule createRule( ItemWrapper item) {
+        if(rules.containsKey(item.getName())) {
+           return rules.get(item.getName());
+        } 
+        return new CommonsItemRule();
     }
 
-    public void updateQuality(ItemWrapper item) {
-        if (!item.hasName("Aged Brie")
-                && !item.hasName("Backstage passes to a TAFKAL80ETC concert")) {
-            if (!item.hasName("Sulfuras, Hand of Ragnaros")) {
-                item.decreaseQuality();
-            }    
-        } else {
-            if (item.getQuality() < 50) {
-                item.increaseQuality();
-
-                if (item.hasName("Backstage passes to a TAFKAL80ETC concert")) {
-                    if (item.getSellIn() < 11) {
-                        item.increaseQuality();
-                    }
-                    if (item.getSellIn() < 6) {
-                        item.increaseQuality();
-                    }
-                }
-            }  
-        }
-    }
-
-    public void handlePastSellIn( ItemWrapper item) {
-        if (item.getSellIn() < 0) {
-            if (!item.hasName("Aged Brie")) {
-                if (!item.hasName("Backstage passes to a TAFKAL80ETC concert")) {
-                    if (!item.hasName("Sulfuras, Hand of Ragnaros")) {
-                        item.decreaseQuality();
-                    }                        
-                } else {
-                    item.reinicializaQuality();
-                }
-            } else {
-                item.increaseQuality();
-            }
-        }
+    public void additionalRules() {
+        rules.put("Sulfuras, Hand of Ragnaros", new LegenderyItemRule());
+        rules.put("Aged Brie", new AgedItemRule());
+        rules.put("Backstage passes to a TAFKAL80ETC concert", new BackstagePassesItemRule());
+        rules.put("Conjured Mana Cake", new ConjuredItemRule());
     }   
 }
